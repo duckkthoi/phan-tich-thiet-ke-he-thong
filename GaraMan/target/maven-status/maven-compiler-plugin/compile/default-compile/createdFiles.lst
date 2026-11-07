@@ -1,0 +1,6 @@
+garaman\model\Item.class
+garaman\model\SparePart.class
+garaman\config\DBConnection.class
+garaman\dao\DAO.class
+garaman\model\Service.class
+garaman\dao\ItemDAO.class
