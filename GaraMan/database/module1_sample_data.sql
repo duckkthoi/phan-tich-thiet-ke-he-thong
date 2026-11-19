@@ -1,6 +1,6 @@
 -- =====================================================================
 -- Dữ liệu chạy thử module Tìm kiếm thông tin dịch vụ/phụ tùng
--- Lấy theo Hình 4.4 (DV01, PT21, DV02). Mã hiển thị = tiền tố loại + id.
+-- Lấy theo Hình 3.3 (DV01, PT21, DV02). Mã hiển thị = tiền tố loại + id.
 -- Ghi chú: tài liệu không ghi thời gian dự kiến và mô tả của DV02;
 -- hai giá trị đó dưới đây chỉ là dữ liệu thử.
 -- =====================================================================

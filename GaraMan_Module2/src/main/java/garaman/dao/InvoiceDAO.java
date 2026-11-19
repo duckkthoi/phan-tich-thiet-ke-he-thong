@@ -15,14 +15,11 @@ import javax.sql.DataSource;
 import garaman.model.Customer;
 import garaman.model.Invoice;
 import garaman.model.InvoiceDetail;
-import garaman.model.Item;
 import garaman.model.SalesStaff;
-import garaman.model.Service;
-import garaman.model.SparePart;
 import garaman.model.Technician;
 
 /**
- * InvoiceDAO (Hình 4.7, Bảng 4.6): đọc hóa đơn; chốt hóa đơn (trừ tồn kho, DRAFT → CONFIRMED)
+ * InvoiceDAO (Hình 3.6, Bảng 3.6): đọc hóa đơn; chốt hóa đơn (trừ tồn kho, DRAFT → CONFIRMED)
  * và ghi nhận thanh toán (CONFIRMED → PAID) trong giao dịch.
  */
 public class InvoiceDAO extends DAO {
@@ -60,14 +57,14 @@ public class InvoiceDAO extends DAO {
     private static final String SQL_LOCK_INVOICE =
             "SELECT status FROM tblInvoice WHERE id = ? FOR UPDATE";
 
+    private static final String SQL_COUNT_DETAILS =
+            "SELECT COUNT(*) FROM tblInvoiceDetail WHERE invoice_id = ?";
+
     private static final String SQL_SPARE_PART_LINES =
             "SELECT d.item_id, d.quantity, i.name FROM tblInvoiceDetail d "
             + "JOIN tblSparePart sp ON sp.item_id = d.item_id "
             + "JOIN tblItem i ON i.id = d.item_id "
             + "WHERE d.invoice_id = ? ORDER BY d.item_id";
-
-    private static final String SQL_COUNT_DETAILS =
-            "SELECT COUNT(*) FROM tblInvoiceDetail WHERE invoice_id = ?";
 
     private static final String SQL_LOCK_STOCK =
             "SELECT quantity_in_stock FROM tblSparePart WHERE item_id = ? FOR UPDATE";
@@ -80,6 +77,10 @@ public class InvoiceDAO extends DAO {
 
     private static final String SQL_SET_PAID =
             "UPDATE tblInvoice SET status = 'PAID', payment_date = ? WHERE id = ? AND status = 'CONFIRMED'";
+
+    /** Một dòng phụ tùng của hóa đơn cần trừ tồn kho khi chốt. */
+    private record SparePartLine(long itemId, int quantity, String name) {
+    }
 
     public InvoiceDAO(DataSource dataSource) {
         super(dataSource);
@@ -117,32 +118,20 @@ public class InvoiceDAO extends DAO {
      * 82.1: thiếu tồn kho hoặc lỗi ghi → rollback toàn bộ, ném BusinessException.
      */
     public Invoice confirmInvoice(Long invoiceId) throws SQLException, BusinessException {
-        try (Connection conn = getConnection()) {
-            conn.setAutoCommit(false);
-            try {
-                String status = lockInvoice(conn, invoiceId);
-                if (!Invoice.DRAFT.equals(status)) {
-                    throw new BusinessException("Hóa đơn không còn ở trạng thái chưa chốt, không thể xác nhận hóa đơn");
-                }
-                if (countDetails(conn, invoiceId) == 0) {
-                    throw new BusinessException("Hóa đơn chưa có dịch vụ/phụ tùng nào, không thể xác nhận hóa đơn");
-                }
-                deductStock(conn, invoiceId);
-                try (PreparedStatement ps = conn.prepareStatement(SQL_SET_CONFIRMED)) {
-                    ps.setLong(1, invoiceId);
-                    ps.executeUpdate();
-                }
-                Invoice invoice = readInvoice(conn, invoiceId).orElseThrow();
-                conn.commit();
-                invoice.setStatus(Invoice.CONFIRMED);
-                return invoice;
-            } catch (SQLException | BusinessException | RuntimeException e) {
-                conn.rollback();
-                throw e;
-            } finally {
-                conn.setAutoCommit(true);
+        return inTransaction(conn -> {
+            if (!Invoice.DRAFT.equals(lockInvoice(conn, invoiceId))) {
+                throw new BusinessException("Hóa đơn không còn ở trạng thái chưa chốt, không thể xác nhận hóa đơn");
             }
-        }
+            if (countDetails(conn, invoiceId) == 0) {
+                throw new BusinessException("Hóa đơn chưa có dịch vụ/phụ tùng nào, không thể xác nhận hóa đơn");
+            }
+            deductStock(conn, invoiceId);
+            try (PreparedStatement ps = conn.prepareStatement(SQL_SET_CONFIRMED)) {
+                ps.setLong(1, invoiceId);
+                ps.executeUpdate();
+            }
+            return readInvoice(conn, invoiceId).orElseThrow();
+        });
     }
 
     /**
@@ -151,41 +140,30 @@ public class InvoiceDAO extends DAO {
      * 93.1: hóa đơn chưa chốt hoặc lỗi ghi → rollback, ném BusinessException.
      */
     public Invoice confirmPayment(Long invoiceId, LocalDateTime paymentDate) throws SQLException, BusinessException {
-        try (Connection conn = getConnection()) {
-            conn.setAutoCommit(false);
-            try {
-                String status = lockInvoice(conn, invoiceId);
-                if (Invoice.PAID.equals(status)) {
-                    Invoice current = readInvoice(conn, invoiceId).orElseThrow();
-                    conn.commit();
-                    return current;
-                }
-                if (!Invoice.CONFIRMED.equals(status)) {
-                    throw new BusinessException("Hóa đơn chưa được chốt, không thể xác nhận thanh toán");
-                }
-                try (PreparedStatement ps = conn.prepareStatement(SQL_SET_PAID)) {
-                    ps.setTimestamp(1, Timestamp.valueOf(paymentDate));
-                    ps.setLong(2, invoiceId);
-                    if (ps.executeUpdate() != 1) {
-                        throw new BusinessException("Không ghi nhận được thanh toán, vui lòng thử lại");
-                    }
-                }
-                Invoice invoice = readInvoice(conn, invoiceId).orElseThrow();
-                conn.commit();
-                invoice.setStatus(Invoice.PAID);
-                invoice.setPaymentDate(paymentDate);
-                return invoice;
-            } catch (SQLException | BusinessException | RuntimeException e) {
-                conn.rollback();
-                throw e;
-            } finally {
-                conn.setAutoCommit(true);
+        return inTransaction(conn -> {
+            String status = lockInvoice(conn, invoiceId);
+            if (Invoice.PAID.equals(status)) {
+                return readInvoice(conn, invoiceId).orElseThrow();
             }
-        }
+            if (!Invoice.CONFIRMED.equals(status)) {
+                throw new BusinessException("Hóa đơn chưa được chốt, không thể xác nhận thanh toán");
+            }
+            try (PreparedStatement ps = conn.prepareStatement(SQL_SET_PAID)) {
+                ps.setTimestamp(1, Timestamp.valueOf(paymentDate));
+                ps.setLong(2, invoiceId);
+                if (ps.executeUpdate() != 1) {
+                    throw new BusinessException("Không ghi nhận được thanh toán, vui lòng thử lại");
+                }
+            }
+            return readInvoice(conn, invoiceId).orElseThrow();
+        });
     }
 
-    /** Khóa bản ghi hóa đơn (SELECT ... FOR UPDATE) và trả trạng thái hiện tại. */
-    private String lockInvoice(Connection conn, Long invoiceId) throws SQLException, BusinessException {
+    /**
+     * Khóa bản ghi hóa đơn (SELECT ... FOR UPDATE) trong giao dịch đang mở và trả trạng thái hiện tại.
+     * Dùng chung với InvoiceDetailDAO.
+     */
+    static String lockInvoice(Connection conn, Long invoiceId) throws SQLException, BusinessException {
         try (PreparedStatement ps = conn.prepareStatement(SQL_LOCK_INVOICE)) {
             ps.setLong(1, invoiceId);
             try (ResultSet rs = ps.executeQuery()) {
@@ -197,7 +175,7 @@ public class InvoiceDAO extends DAO {
         }
     }
 
-    private int countDetails(Connection conn, Long invoiceId) throws SQLException {
+    private static int countDetails(Connection conn, Long invoiceId) throws SQLException {
         try (PreparedStatement ps = conn.prepareStatement(SQL_COUNT_DETAILS)) {
             ps.setLong(1, invoiceId);
             try (ResultSet rs = ps.executeQuery()) {
@@ -207,44 +185,47 @@ public class InvoiceDAO extends DAO {
         }
     }
 
-    /** Vòng lặp từng dòng phụ tùng theo thứ tự id: khóa tblSparePart, kiểm tra tồn ≥ SL, trừ tồn (cùng Connection). */
-    private void deductStock(Connection conn, Long invoiceId) throws SQLException, BusinessException {
-        List<long[]> lines = new ArrayList<>();
-        List<String> names = new ArrayList<>();
-        try (PreparedStatement ps = conn.prepareStatement(SQL_SPARE_PART_LINES)) {
-            ps.setLong(1, invoiceId);
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    lines.add(new long[] {rs.getLong("item_id"), rs.getInt("quantity")});
-                    names.add(rs.getString("name"));
-                }
-            }
-        }
-        for (int i = 0; i < lines.size(); i++) {
-            long itemId = lines.get(i)[0];
-            int quantity = (int) lines.get(i)[1];
+    /**
+     * Duyệt từng dòng phụ tùng theo thứ tự id: khóa tblSparePart, kiểm tra tồn ≥ SL, trừ tồn
+     * (cùng Connection). Khóa theo thứ tự cố định để hai giao dịch chốt đồng thời không bế tắc.
+     */
+    private static void deductStock(Connection conn, Long invoiceId) throws SQLException, BusinessException {
+        for (SparePartLine line : readSparePartLines(conn, invoiceId)) {
             int stock;
             try (PreparedStatement ps = conn.prepareStatement(SQL_LOCK_STOCK)) {
-                ps.setLong(1, itemId);
+                ps.setLong(1, line.itemId());
                 try (ResultSet rs = ps.executeQuery()) {
                     rs.next();
                     stock = rs.getInt("quantity_in_stock");
                 }
             }
-            if (stock < quantity) {
-                throw new BusinessException("Phụ tùng " + names.get(i) + " không đủ tồn kho (còn "
-                        + stock + ", cần " + quantity + ")");
+            if (stock < line.quantity()) {
+                throw new BusinessException("Phụ tùng " + line.name() + " không đủ tồn kho (còn "
+                        + stock + ", cần " + line.quantity() + ")");
             }
             try (PreparedStatement ps = conn.prepareStatement(SQL_DEDUCT_STOCK)) {
-                ps.setInt(1, quantity);
-                ps.setLong(2, itemId);
+                ps.setInt(1, line.quantity());
+                ps.setLong(2, line.itemId());
                 ps.executeUpdate();
             }
         }
     }
 
+    private static List<SparePartLine> readSparePartLines(Connection conn, Long invoiceId) throws SQLException {
+        List<SparePartLine> lines = new ArrayList<>();
+        try (PreparedStatement ps = conn.prepareStatement(SQL_SPARE_PART_LINES)) {
+            ps.setLong(1, invoiceId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    lines.add(new SparePartLine(rs.getLong("item_id"), rs.getInt("quantity"), rs.getString("name")));
+                }
+            }
+        }
+        return lines;
+    }
+
     /** Đóng gói hóa đơn: Customer, SalesStaff, từng InvoiceDetail (Item là Service/SparePart, Technician nếu có). */
-    private Optional<Invoice> readInvoice(Connection conn, Long invoiceId) throws SQLException {
+    private static Optional<Invoice> readInvoice(Connection conn, Long invoiceId) throws SQLException {
         Invoice invoice;
         try (PreparedStatement ps = conn.prepareStatement(SQL_GET_HEADER)) {
             ps.setLong(1, invoiceId);
@@ -252,27 +233,7 @@ public class InvoiceDAO extends DAO {
                 if (!rs.next()) {
                     return Optional.empty();
                 }
-                Customer customer = new Customer();
-                customer.setId(rs.getLong("customer_id"));
-                customer.setFullName(rs.getString("customer_name"));
-                customer.setPhone(rs.getString("customer_phone"));
-                customer.setAddress(rs.getString("customer_address"));
-
-                SalesStaff salesStaff = new SalesStaff();
-                salesStaff.setId(rs.getLong("staff_id"));
-                salesStaff.setFullName(rs.getString("staff_name"));
-                salesStaff.setUsername(rs.getString("staff_username"));
-                salesStaff.setPhone(rs.getString("staff_phone"));
-                salesStaff.setEmail(rs.getString("staff_email"));
-                salesStaff.setPosition(rs.getString("staff_position"));
-
-                invoice = new Invoice();
-                invoice.setId(rs.getLong("id"));
-                invoice.setCreatedDate(toLocalDateTime(rs.getTimestamp("created_date")));
-                invoice.setStatus(rs.getString("status"));
-                invoice.setPaymentDate(toLocalDateTime(rs.getTimestamp("payment_date")));
-                invoice.setCustomer(customer);
-                invoice.setSalesStaff(salesStaff);
+                invoice = toInvoiceHeader(rs);
             }
         }
 
@@ -281,18 +242,7 @@ public class InvoiceDAO extends DAO {
             ps.setLong(1, invoiceId);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    InvoiceDetail detail = new InvoiceDetail();
-                    detail.setId(rs.getLong("id"));
-                    detail.setQuantity(rs.getInt("quantity"));
-                    detail.setUnitPrice(rs.getBigDecimal("unit_price"));
-                    detail.setItem(toItem(rs));
-                    if (rs.getObject("technician_id") != null) {
-                        Technician technician = new Technician();
-                        technician.setId(rs.getLong("technician_id"));
-                        technician.setFullName(rs.getString("technician_name"));
-                        technician.setPhone(rs.getString("technician_phone"));
-                        detail.setTechnician(technician);
-                    }
+                    InvoiceDetail detail = toInvoiceDetail(rs);
                     detail.setInvoice(invoice);
                     details.add(detail);
                 }
@@ -302,23 +252,45 @@ public class InvoiceDAO extends DAO {
         return Optional.of(invoice);
     }
 
-    /** Đóng gói mặt hàng của dòng chi tiết thành Service hoặc SparePart (Item là lớp trừu tượng). */
-    private static Item toItem(ResultSet rs) throws SQLException {
-        Item item;
-        if (rs.getObject("service_id") != null) {
-            Service service = new Service();
-            service.setEstimatedDuration(rs.getInt("estimated_duration"));
-            item = service;
-        } else {
-            SparePart sparePart = new SparePart();
-            sparePart.setQuantityInStock(rs.getInt("quantity_in_stock"));
-            item = sparePart;
+    private static Invoice toInvoiceHeader(ResultSet rs) throws SQLException {
+        Customer customer = new Customer();
+        customer.setId(rs.getLong("customer_id"));
+        customer.setFullName(rs.getString("customer_name"));
+        customer.setPhone(rs.getString("customer_phone"));
+        customer.setAddress(rs.getString("customer_address"));
+
+        SalesStaff salesStaff = new SalesStaff();
+        salesStaff.setId(rs.getLong("staff_id"));
+        salesStaff.setFullName(rs.getString("staff_name"));
+        salesStaff.setUsername(rs.getString("staff_username"));
+        salesStaff.setPhone(rs.getString("staff_phone"));
+        salesStaff.setEmail(rs.getString("staff_email"));
+        salesStaff.setPosition(rs.getString("staff_position"));
+
+        Invoice invoice = new Invoice();
+        invoice.setId(rs.getLong("id"));
+        invoice.setCreatedDate(toLocalDateTime(rs.getTimestamp("created_date")));
+        invoice.setStatus(rs.getString("status"));
+        invoice.setPaymentDate(toLocalDateTime(rs.getTimestamp("payment_date")));
+        invoice.setCustomer(customer);
+        invoice.setSalesStaff(salesStaff);
+        return invoice;
+    }
+
+    private static InvoiceDetail toInvoiceDetail(ResultSet rs) throws SQLException {
+        InvoiceDetail detail = new InvoiceDetail();
+        detail.setId(rs.getLong("id"));
+        detail.setQuantity(rs.getInt("quantity"));
+        detail.setUnitPrice(rs.getBigDecimal("unit_price"));
+        detail.setItem(ItemDAO.toItem(rs, "item_id"));
+        if (rs.getObject("technician_id") != null) {
+            Technician technician = new Technician();
+            technician.setId(rs.getLong("technician_id"));
+            technician.setFullName(rs.getString("technician_name"));
+            technician.setPhone(rs.getString("technician_phone"));
+            detail.setTechnician(technician);
         }
-        item.setId(rs.getLong("item_id"));
-        item.setName(rs.getString("name"));
-        item.setDescription(rs.getString("description"));
-        item.setPrice(rs.getBigDecimal("price"));
-        return item;
+        return detail;
     }
 
     private static LocalDateTime toLocalDateTime(Timestamp ts) {

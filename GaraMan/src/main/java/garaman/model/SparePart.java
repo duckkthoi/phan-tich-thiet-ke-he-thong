@@ -1,7 +1,7 @@
 package garaman.model;
 
 /**
- * Lớp thực thể SparePart kế thừa Item (Hình 4.5).
+ * Lớp thực thể SparePart kế thừa Item (Hình 3.4).
  */
 public class SparePart extends Item {
 

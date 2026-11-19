@@ -15,7 +15,7 @@ import garaman.model.Service;
 import garaman.model.SparePart;
 
 /**
- * ItemDAO (Hình 4.5, Bảng 4.5): tìm dịch vụ/phụ tùng theo tên và đọc chi tiết.
+ * ItemDAO (Hình 3.4, Bảng 3.5): tìm dịch vụ/phụ tùng theo tên và đọc chi tiết.
  */
 public class ItemDAO extends DAO {
 
@@ -46,7 +46,7 @@ public class ItemDAO extends DAO {
         List<Item> items = new ArrayList<>();
         try (Connection conn = getConnection();
              PreparedStatement ps = conn.prepareStatement(SQL_SEARCH)) {
-            ps.setString(1, "%" + escapeLike(keyword) + "%");
+            ps.setString(1, likePattern(keyword));
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     Item item = toItem(rs);
@@ -67,39 +67,32 @@ public class ItemDAO extends DAO {
              PreparedStatement ps = conn.prepareStatement(SQL_GET_DETAIL)) {
             ps.setLong(1, itemId);
             try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    return Optional.ofNullable(toItem(rs));
-                }
+                return rs.next() ? Optional.ofNullable(toItem(rs)) : Optional.empty();
             }
         }
-        return Optional.empty();
     }
 
-    /** Đóng gói bản ghi thành Service hoặc SparePart (Item là lớp trừu tượng). */
-    private Item toItem(ResultSet rs) throws SQLException {
+    /**
+     * Đóng gói bản ghi thành Service hoặc SparePart (Item là lớp trừu tượng);
+     * null nếu bản ghi không thuộc bảng lớp con nào.
+     */
+    private static Item toItem(ResultSet rs) throws SQLException {
+        Item item;
         if (rs.getObject("service_id") != null) {
             Service service = new Service();
-            service.setId(rs.getLong("id"));
-            service.setName(rs.getString("name"));
-            service.setDescription(rs.getString("description"));
-            service.setPrice(rs.getBigDecimal("price"));
             service.setEstimatedDuration(rs.getInt("estimated_duration"));
-            return service;
-        }
-        if (rs.getObject("spare_part_id") != null) {
+            item = service;
+        } else if (rs.getObject("spare_part_id") != null) {
             SparePart sparePart = new SparePart();
-            sparePart.setId(rs.getLong("id"));
-            sparePart.setName(rs.getString("name"));
-            sparePart.setDescription(rs.getString("description"));
-            sparePart.setPrice(rs.getBigDecimal("price"));
             sparePart.setQuantityInStock(rs.getInt("quantity_in_stock"));
-            return sparePart;
+            item = sparePart;
+        } else {
+            return null;
         }
-        return null;
-    }
-
-    /** Escape kí tự đại diện của LIKE để từ khóa được so khớp nguyên văn. */
-    private static String escapeLike(String keyword) {
-        return keyword.replace("!", "!!").replace("%", "!%").replace("_", "!_");
+        item.setId(rs.getLong("id"));
+        item.setName(rs.getString("name"));
+        item.setDescription(rs.getString("description"));
+        item.setPrice(rs.getBigDecimal("price"));
+        return item;
     }
 }

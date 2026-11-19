@@ -1,6 +1,6 @@
 -- =====================================================================
 -- GaraMan - Cơ sở dữ liệu toàn hệ thống (14 bảng)
--- Theo mục 4.2 / Bảng 4.4 tài liệu thiết kế 28B23DCCN185.docx
+-- Theo mục 3.2 / Bảng 3.4 báo cáo BaoCao_GaraMan_B23DCCN185.docx
 -- Hệ quản trị: MySQL 8
 -- =====================================================================
 CREATE DATABASE IF NOT EXISTS garaman

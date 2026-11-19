@@ -1,8 +1,8 @@
 -- =====================================================================
 -- Mock data bổ sung cho CSDL garaman (chạy SAU module1_sample_data.sql)
--- Giữ nguyên 3 bản ghi của Hình 4.4 (DV01, DV02, PT21).
+-- Giữ nguyên 3 bản ghi của Hình 3.3 (DV01, DV02, PT21).
 -- Ràng buộc: không tên dịch vụ/phụ tùng mới nào chứa "phanh", để tìm "phanh"
--- vẫn ra đúng 3 kết quả như Hình 4.4.
+-- vẫn ra đúng 3 kết quả như Hình 3.3.
 -- Từ khóa gợi ý để demo module 1:
 --   "lọc"       -> 3 kết quả (Lọc dầu, Lọc gió động cơ, Lọc gió điều hòa)
 --   "dầu"       -> nhiều kết quả, cả dịch vụ lẫn phụ tùng

@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%!
     /*
-     * customerMain.jsp (Hình 4.5, Bảng 4.5)
+     * customerMain.jsp (Hình 3.4, Bảng 3.5)
      *   subSearchMenu: link
      *   openItemSearch(): void  -> gọi trang itemSearch.jsp (không yêu cầu đăng nhập)
      */
@@ -15,6 +15,7 @@
         openItemSearch(response);
         return;
     }
+    String ctx = request.getContextPath();
 %>
 <!DOCTYPE html>
 <html lang="vi">
@@ -22,12 +23,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>GaraMan - Trang chủ</title>
+    <link rel="stylesheet" href="<%= ctx %>/view/css/style.css">
     <style>
-        body { font-family: Arial, Helvetica, sans-serif; font-size: 14px; margin: 24px; color: #222; }
-        .panel { border: 1px solid #555; border-radius: 4px; max-width: 360px; padding: 0 16px 16px; }
-        .panel h2 { font-size: 15px; text-align: center; margin: 0 -16px 12px; padding: 10px 16px; border-bottom: 1px solid #555; }
-        .btn { display: inline-block; margin: 6px 0; padding: 4px 12px; border: 1px solid #5b8fb9; background: #cfe5f7;
-               color: #000; text-decoration: none; font-size: 14px; cursor: pointer; }
+        .panel { max-width: 360px; }
+        .btn { margin: 6px 0; }
         .btn[disabled] { cursor: default; }
     </style>
 </head>
@@ -35,7 +34,7 @@
 <div class="panel">
     <h2>GARAMAN — TRANG CHỦ</h2>
     <p>Chào mừng quý khách đến với GaraMan.</p>
-    <a id="subSearchMenu" class="btn" href="<%= request.getContextPath() %>/view/customer/customerMain.jsp?action=openItemSearch">Tìm dịch vụ/phụ tùng</a><br>
+    <a id="subSearchMenu" class="btn" href="<%= ctx %>/view/customer/customerMain.jsp?action=openItemSearch">Tìm dịch vụ/phụ tùng</a><br>
     <%-- "Đặt lịch hẹn" thuộc module khác (appointment.jsp), chưa nằm trong phạm vi module này --%>
     <button class="btn" type="button" disabled>Đặt lịch hẹn</button>
 </div>

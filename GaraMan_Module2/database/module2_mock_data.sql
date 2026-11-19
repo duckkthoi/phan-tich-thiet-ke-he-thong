@@ -2,7 +2,7 @@
 -- Mock data bổ sung cho CSDL garaman_module2 (chạy SAU module2_sample_data.sql)
 -- Không sửa bản ghi nào của tệp mẫu; chỉ thêm bản ghi với id nối tiếp.
 -- Ràng buộc: không tên khách mới nào chứa "nam" (so khớp không dấu), để tìm "Nam"
--- vẫn ra đúng KH01, KH02 như Hình 4.6.
+-- vẫn ra đúng KH01, KH02 như Hình 3.5.
 -- Muốn reset: chạy lại module2_sample_data.sql rồi chạy tệp này.
 --
 -- Tài khoản thêm (mật khẩu 123456): banhang3 - SalesStaff, kho02 - WarehouseStaff.

@@ -1,7 +1,7 @@
 package garaman.model;
 
 /**
- * Lớp thực thể trừu tượng Member (Hình 4.7).
+ * Lớp thực thể trừu tượng Member (Hình 3.6).
  */
 public abstract class Member {
 

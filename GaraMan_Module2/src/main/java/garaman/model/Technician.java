@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Lớp thực thể Technician (Hình 4.7).
+ * Lớp thực thể Technician (Hình 3.6).
  */
 public class Technician {
 

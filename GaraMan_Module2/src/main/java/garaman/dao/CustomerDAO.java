@@ -12,7 +12,7 @@ import javax.sql.DataSource;
 import garaman.model.Customer;
 
 /**
- * CustomerDAO (Hình 4.7, Bảng 4.6): tìm khách hàng có full_name chứa từ khóa.
+ * CustomerDAO (Hình 3.6, Bảng 3.6): tìm khách hàng có full_name chứa từ khóa.
  */
 public class CustomerDAO extends DAO {
 
@@ -30,7 +30,7 @@ public class CustomerDAO extends DAO {
         List<Customer> customers = new ArrayList<>();
         try (Connection conn = getConnection();
              PreparedStatement ps = conn.prepareStatement(SQL_SEARCH)) {
-            ps.setString(1, "%" + escapeLike(name) + "%");
+            ps.setString(1, likePattern(name));
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     Customer customer = new Customer();
@@ -43,10 +43,5 @@ public class CustomerDAO extends DAO {
             }
         }
         return customers;
-    }
-
-    /** Escape kí tự đại diện của LIKE để từ khóa được so khớp nguyên văn. */
-    private static String escapeLike(String keyword) {
-        return keyword.replace("!", "!!").replace("%", "!%").replace("_", "!_");
     }
 }

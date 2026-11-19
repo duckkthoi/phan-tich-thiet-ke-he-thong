@@ -15,7 +15,8 @@ import garaman.model.Service;
 import garaman.model.SparePart;
 
 /**
- * ItemDAO (Hình 4.5, Bảng 4.5): tìm dịch vụ/phụ tùng theo tên và đọc chi tiết.
+ * ItemDAO (Hình 3.6, Bảng 3.6): tìm dịch vụ/phụ tùng theo tên và đọc chi tiết.
+ * Phần đọc và đóng gói Item được InvoiceDAO, InvoiceDetailDAO dùng lại.
  */
 public class ItemDAO extends DAO {
 
@@ -46,10 +47,10 @@ public class ItemDAO extends DAO {
         List<Item> items = new ArrayList<>();
         try (Connection conn = getConnection();
              PreparedStatement ps = conn.prepareStatement(SQL_SEARCH)) {
-            ps.setString(1, "%" + escapeLike(keyword) + "%");
+            ps.setString(1, likePattern(keyword));
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    Item item = toItem(rs);
+                    Item item = toItem(rs, "id");
                     if (item != null) {
                         items.add(item);
                     }
@@ -63,43 +64,44 @@ public class ItemDAO extends DAO {
      * Đọc tblItem theo id và bảng lớp con (tblService hoặc tblSparePart) để xác định loại.
      */
     public Optional<Item> getDetail(Long itemId) throws SQLException {
-        try (Connection conn = getConnection();
-             PreparedStatement ps = conn.prepareStatement(SQL_GET_DETAIL)) {
+        try (Connection conn = getConnection()) {
+            return Optional.ofNullable(readItem(conn, itemId));
+        }
+    }
+
+    /** Đọc mặt hàng trên Connection cho sẵn (có thể đang trong giao dịch); null nếu không tồn tại. */
+    static Item readItem(Connection conn, Long itemId) throws SQLException {
+        try (PreparedStatement ps = conn.prepareStatement(SQL_GET_DETAIL)) {
             ps.setLong(1, itemId);
             try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    return Optional.ofNullable(toItem(rs));
-                }
+                return rs.next() ? toItem(rs, "id") : null;
             }
         }
-        return Optional.empty();
     }
 
-    /** Đóng gói bản ghi thành Service hoặc SparePart (Item là lớp trừu tượng). */
-    private Item toItem(ResultSet rs) throws SQLException {
+    /**
+     * Đóng gói bản ghi hiện tại thành Service hoặc SparePart (Item là lớp trừu tượng);
+     * null nếu bản ghi không thuộc bảng lớp con nào. Bản ghi phải có các cột service_id,
+     * estimated_duration, spare_part_id, quantity_in_stock, name, description, price
+     * và cột mã mặt hàng tên idColumn.
+     */
+    static Item toItem(ResultSet rs, String idColumn) throws SQLException {
+        Item item;
         if (rs.getObject("service_id") != null) {
             Service service = new Service();
-            service.setId(rs.getLong("id"));
-            service.setName(rs.getString("name"));
-            service.setDescription(rs.getString("description"));
-            service.setPrice(rs.getBigDecimal("price"));
             service.setEstimatedDuration(rs.getInt("estimated_duration"));
-            return service;
-        }
-        if (rs.getObject("spare_part_id") != null) {
+            item = service;
+        } else if (rs.getObject("spare_part_id") != null) {
             SparePart sparePart = new SparePart();
-            sparePart.setId(rs.getLong("id"));
-            sparePart.setName(rs.getString("name"));
-            sparePart.setDescription(rs.getString("description"));
-            sparePart.setPrice(rs.getBigDecimal("price"));
             sparePart.setQuantityInStock(rs.getInt("quantity_in_stock"));
-            return sparePart;
+            item = sparePart;
+        } else {
+            return null;
         }
-        return null;
-    }
-
-    /** Escape kí tự đại diện của LIKE để từ khóa được so khớp nguyên văn. */
-    private static String escapeLike(String keyword) {
-        return keyword.replace("!", "!!").replace("%", "!%").replace("_", "!_");
+        item.setId(rs.getLong(idColumn));
+        item.setName(rs.getString("name"));
+        item.setDescription(rs.getString("description"));
+        item.setPrice(rs.getBigDecimal("price"));
+        return item;
     }
 }

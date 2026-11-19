@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Lớp thực thể Customer (Hình 4.7).
+ * Lớp thực thể Customer (Hình 3.6).
  */
 public class Customer {
 

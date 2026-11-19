@@ -3,7 +3,7 @@ package garaman.model;
 import java.math.BigDecimal;
 
 /**
- * Lớp thực thể InvoiceDetail (Hình 4.7). subtotal là thuộc tính dẫn xuất, không lưu:
+ * Lớp thực thể InvoiceDetail (Hình 3.6). subtotal là thuộc tính dẫn xuất, không lưu:
  * tính bằng calculateSubtotal() = quantity × unitPrice.
  */
 public class InvoiceDetail {

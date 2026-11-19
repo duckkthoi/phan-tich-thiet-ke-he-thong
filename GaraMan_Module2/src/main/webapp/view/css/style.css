@@ -1,0 +1,17 @@
+/* Kiểu dáng dùng chung cho các trang của module nhận thanh toán.
+   Phần riêng của từng trang (độ rộng khung, khoảng cách) đặt trong thẻ <style> của trang đó. */
+body { font-family: Arial, Helvetica, sans-serif; font-size: 14px; margin: 24px; color: #222; }
+.panel { border: 1px solid #555; border-radius: 4px; padding: 0 16px 16px; }
+.panel h2 { font-size: 15px; text-align: center; margin: 0 -16px 12px; padding: 10px 16px; border-bottom: 1px solid #555; }
+.btn { display: inline-block; padding: 4px 12px; border: 1px solid #5b8fb9; background: #cfe5f7;
+       color: #000; text-decoration: none; font-size: 14px; cursor: pointer; }
+.btn.disabled, .btn[disabled] { border-color: #bbb; background: #eee; color: #999; cursor: default; }
+.message { margin: 12px 0; padding: 6px 10px; border: 1px solid #c9a227; background: #fff8dc; }
+.search-row { display: flex; align-items: center; gap: 8px; }
+.search-row input { flex: 1; padding: 4px 6px; font-size: 14px; }
+.actions { display: flex; justify-content: space-between; margin-top: 12px; }
+.total { text-align: right; font-weight: bold; margin: 10px 0; }
+h3 { font-size: 14px; margin: 16px 0 6px; }
+form { margin: 0; }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid #333; padding: 3px 6px; text-align: left; vertical-align: top; }

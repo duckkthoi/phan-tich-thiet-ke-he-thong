@@ -4,49 +4,33 @@
 <%@ page import="garaman.config.DBConnection" %>
 <%@ page import="garaman.dao.MemberDAO" %>
 <%@ page import="garaman.model.SalesStaff" %>
+<%@ page import="static garaman.view.ViewHelper.*" %>
 <%--
-    PHẦN NGOÀI MODULE NHẬN THANH TOÁN (gói view/member, Hình 4.13).
+    PHẦN NGOÀI MODULE NHẬN THANH TOÁN (gói view/member, Hình 3.12).
     Đăng nhập tối thiểu chỉ để tạo phiên loggedInStaff cho nhân viên bán hàng
     (tiền điều kiện của kịch bản: nhân viên bán hàng đã đăng nhập).
 --%>
-<%!
-    private static String esc(Object value) {
-        if (value == null) return "";
-        String s = value.toString();
-        StringBuilder sb = new StringBuilder(s.length());
-        for (char c : s.toCharArray()) {
-            switch (c) {
-                case '<': sb.append("&lt;"); break;
-                case '>': sb.append("&gt;"); break;
-                case '&': sb.append("&amp;"); break;
-                case '"': sb.append("&quot;"); break;
-                case '\'': sb.append("&#39;"); break;
-                default: sb.append(c);
-            }
-        }
-        return sb.toString();
-    }
-%>
 <%
     request.setCharacterEncoding("UTF-8");
+    final String MSG_WRONG = "Sai tên đăng nhập hoặc mật khẩu";
     String message = null;
     String username = request.getParameter("username");
     if ("POST".equalsIgnoreCase(request.getMethod())) {
         String password = request.getParameter("password");
         if (username == null || username.isBlank() || password == null || password.isEmpty()) {
-            message = "Sai tên đăng nhập hoặc mật khẩu";
+            message = MSG_WRONG;
         } else {
             try {
                 Optional<SalesStaff> staff = new MemberDAO(DBConnection.getDataSource())
                         .checkLogin(username.trim(), password);
                 if (staff.isPresent()) {
+                    // Hủy phiên cũ, tạo phiên mới để tránh dùng lại mã phiên trước khi đăng nhập
                     session.invalidate();
-                    HttpSession newSession = request.getSession(true);
-                    newSession.setAttribute("loggedInStaff", staff.get());
+                    request.getSession(true).setAttribute(LOGGED_IN_STAFF, staff.get());
                     response.sendRedirect(request.getContextPath() + "/view/salesstaff/salesStaffMain.jsp");
                     return;
                 }
-                message = "Sai tên đăng nhập hoặc mật khẩu";
+                message = MSG_WRONG;
             } catch (SQLException e) {
                 log("MemberDAO.checkLogin() thất bại", e);
                 message = "Không thực hiện được thao tác, vui lòng thử lại";
@@ -60,15 +44,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>GaraMan - Đăng nhập</title>
+    <link rel="stylesheet" href="<%= request.getContextPath() %>/view/css/style.css">
     <style>
-        body { font-family: Arial, Helvetica, sans-serif; font-size: 14px; margin: 24px; color: #222; }
-        .panel { border: 1px solid #555; border-radius: 4px; max-width: 360px; padding: 0 16px 16px; }
-        .panel h2 { font-size: 15px; text-align: center; margin: 0 -16px 12px; padding: 10px 16px; border-bottom: 1px solid #555; }
+        .panel { max-width: 360px; }
         label { display: block; margin: 8px 0 4px; }
         input[type=text], input[type=password] { width: 100%; box-sizing: border-box; padding: 4px 6px; font-size: 14px; }
-        .btn { display: inline-block; margin-top: 12px; padding: 4px 12px; border: 1px solid #5b8fb9; background: #cfe5f7;
-               color: #000; text-decoration: none; font-size: 14px; cursor: pointer; }
-        .message { margin: 12px 0; padding: 6px 10px; border: 1px solid #c9a227; background: #fff8dc; }
+        .btn { margin-top: 12px; }
     </style>
 </head>
 <body>

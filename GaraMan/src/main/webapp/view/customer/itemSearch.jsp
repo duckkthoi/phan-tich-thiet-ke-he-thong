@@ -1,18 +1,13 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ page import="java.util.List" %>
 <%@ page import="java.sql.SQLException" %>
-<%@ page import="java.math.BigDecimal" %>
-<%@ page import="java.net.URLEncoder" %>
-<%@ page import="java.nio.charset.StandardCharsets" %>
-<%@ page import="java.text.DecimalFormat" %>
-<%@ page import="java.text.DecimalFormatSymbols" %>
 <%@ page import="garaman.config.DBConnection" %>
 <%@ page import="garaman.dao.ItemDAO" %>
 <%@ page import="garaman.model.Item" %>
-<%@ page import="garaman.model.Service" %>
+<%@ page import="static garaman.view.ViewHelper.*" %>
 <%!
     /*
-     * itemSearch.jsp (Hình 4.5, Bảng 4.5)
+     * itemSearch.jsp (Hình 3.4, Bảng 3.5)
      *   inKeyword: String; subSearch: submit; outItemList: Table
      *   ẩn: keyword: String; items: List<Item>; selectedItemId: Long?; searched: boolean
      *   searchItems(keyword): void; openItemDetail(itemId): void
@@ -45,56 +40,16 @@
         }
     }
 
-    /** Bước 18-19: ghi nhận selectedItemId và gọi trang itemDetail.jsp kèm từ khóa hiện tại. */
+    /** Bước 18-19: gọi trang itemDetail.jsp với selectedItemId và từ khóa hiện tại. */
     private void openItemDetail(HttpServletRequest request, HttpServletResponse response, String itemId)
             throws java.io.IOException {
-        request.setAttribute("selectedItemId", itemId);
-        String keyword = request.getParameter("keyword");
         response.sendRedirect("itemDetail.jsp?itemId=" + encode(itemId)
-                + "&keyword=" + encode(keyword == null ? "" : keyword));
+                + "&keyword=" + encode(request.getParameter("keyword")));
     }
 
     /** showMessage(message): thông báo cho khách hàng. */
     private void showMessage(HttpServletRequest request, String message) {
         request.setAttribute("message", message);
-    }
-
-    private static String encode(String value) {
-        return URLEncoder.encode(value == null ? "" : value, StandardCharsets.UTF_8);
-    }
-
-    private static String esc(Object value) {
-        if (value == null) return "";
-        String s = value.toString();
-        StringBuilder sb = new StringBuilder(s.length());
-        for (char c : s.toCharArray()) {
-            switch (c) {
-                case '<': sb.append("&lt;"); break;
-                case '>': sb.append("&gt;"); break;
-                case '&': sb.append("&amp;"); break;
-                case '"': sb.append("&quot;"); break;
-                case '\'': sb.append("&#39;"); break;
-                default: sb.append(c);
-            }
-        }
-        return sb.toString();
-    }
-
-    /** Mã hiển thị theo Hình 4.4: DV + id (dịch vụ), PT + id (phụ tùng). */
-    private static String itemCode(Item item) {
-        return (item instanceof Service ? "DV" : "PT") + String.format("%02d", item.getId());
-    }
-
-    private static String itemType(Item item) {
-        return item instanceof Service ? "Dịch vụ" : "Phụ tùng";
-    }
-
-    private static String formatPrice(BigDecimal price) {
-        if (price == null) return "";
-        DecimalFormatSymbols symbols = new DecimalFormatSymbols();
-        symbols.setGroupingSeparator('.');
-        symbols.setDecimalSeparator(',');
-        return new DecimalFormat("#,##0", symbols).format(price) + " đ";
     }
 %>
 <%
@@ -126,18 +81,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>GaraMan - Tìm kiếm dịch vụ và phụ tùng</title>
+    <link rel="stylesheet" href="<%= request.getContextPath() %>/view/css/style.css">
     <style>
-        body { font-family: Arial, Helvetica, sans-serif; font-size: 14px; margin: 24px; color: #222; }
-        .panel { border: 1px solid #555; border-radius: 4px; max-width: 640px; padding: 0 16px 16px; }
-        .panel h2 { font-size: 15px; text-align: center; margin: 0 -16px 12px; padding: 10px 16px; border-bottom: 1px solid #555; }
-        .search-row { display: flex; align-items: center; gap: 8px; }
-        .search-row input { flex: 1; padding: 4px 6px; font-size: 14px; }
-        .btn { display: inline-block; padding: 4px 12px; border: 1px solid #5b8fb9; background: #cfe5f7;
-               color: #000; text-decoration: none; font-size: 14px; cursor: pointer; }
-        h3 { font-size: 14px; margin: 16px 0 6px; }
-        table { border-collapse: collapse; width: 100%; }
-        th, td { border: 1px solid #333; padding: 3px 6px; text-align: left; vertical-align: top; }
-        .message { margin: 12px 0; padding: 6px 10px; border: 1px solid #c9a227; background: #fff8dc; }
+        .panel { max-width: 640px; }
     </style>
 </head>
 <body>

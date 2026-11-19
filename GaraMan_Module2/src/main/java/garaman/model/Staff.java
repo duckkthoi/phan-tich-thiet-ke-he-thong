@@ -1,7 +1,7 @@
 package garaman.model;
 
 /**
- * Lớp thực thể trừu tượng Staff kế thừa Member (Hình 4.7).
+ * Lớp thực thể trừu tượng Staff kế thừa Member (Hình 3.6).
  */
 public abstract class Staff extends Member {
 

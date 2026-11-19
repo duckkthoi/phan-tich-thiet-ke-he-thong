@@ -1,7 +1,7 @@
 package garaman.model;
 
 /**
- * Lớp thực thể Service kế thừa Item (Hình 4.7).
+ * Lớp thực thể Service kế thừa Item (Hình 3.6).
  */
 public class Service extends Item {
 

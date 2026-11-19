@@ -3,7 +3,7 @@ package garaman.model;
 import java.math.BigDecimal;
 
 /**
- * Lớp thực thể trừu tượng Item (Hình 4.5). Đối tượng được tạo luôn là Service hoặc SparePart.
+ * Lớp thực thể trừu tượng Item (Hình 3.4). Đối tượng được tạo luôn là Service hoặc SparePart.
  */
 public abstract class Item {
 

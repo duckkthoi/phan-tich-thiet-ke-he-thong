@@ -9,7 +9,7 @@ import javax.sql.DataSource;
 import org.apache.tomcat.jdbc.pool.PoolProperties;
 
 /**
- * Cấu hình kết nối CSDL (gói config, Hình 4.13): đọc db.properties và tạo
+ * Cấu hình kết nối CSDL (gói config, Hình 3.12): đọc db.properties và tạo
  * một connection pool dùng chung cho toàn hệ thống.
  */
 public final class DBConnection {

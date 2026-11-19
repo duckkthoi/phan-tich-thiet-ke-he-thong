@@ -1,17 +1,15 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ page import="java.util.List" %>
 <%@ page import="java.sql.SQLException" %>
-<%@ page import="java.time.LocalDateTime" %>
-<%@ page import="java.time.format.DateTimeFormatter" %>
 <%@ page import="garaman.config.DBConnection" %>
 <%@ page import="garaman.dao.CustomerDAO" %>
 <%@ page import="garaman.dao.InvoiceDAO" %>
 <%@ page import="garaman.model.Customer" %>
 <%@ page import="garaman.model.Invoice" %>
-<%@ page import="garaman.model.SalesStaff" %>
+<%@ page import="static garaman.view.ViewHelper.*" %>
 <%!
     /*
-     * customerSearch.jsp (Hình 4.6, Hình 4.7, Bảng 4.6)
+     * customerSearch.jsp (Hình 3.5, Hình 3.6, Bảng 3.6)
      *   inCustomerName; subSearch; outCustomerList; outUnpaidInvoiceList
      *   ẩn: customerName, customers, selectedCustomerId, unpaidInvoices, selectedInvoiceId
      *   searchCustomers(name); loadUnpaidInvoices(customerId); openInvoice(invoiceId)
@@ -22,6 +20,9 @@
     private static final String A_CUSTOMER_ID = "customerSearch.selectedCustomerId";
     private static final String A_INVOICES = "customerSearch.unpaidInvoices";
     private static final String A_INVOICE_ID = "customerSearch.selectedInvoiceId";
+
+    private static final String MSG_ERROR = "Không thực hiện được thao tác, vui lòng thử lại";
+    private static final String MSG_NO_CUSTOMER = "Không tìm thấy khách hàng";
 
     /** Bước 6-13: chuẩn hóa, kiểm tra tên rồi gọi CustomerDAO.searchCustomer(). */
     private void searchCustomers(HttpServletRequest request, HttpSession session, String name) {
@@ -41,12 +42,12 @@
             session.setAttribute(A_CUSTOMERS, customers);
             if (customers.isEmpty()) {
                 // 12.1
-                showMessage(request, "Không tìm thấy khách hàng");
+                showMessage(request, MSG_NO_CUSTOMER);
             }
         } catch (SQLException e) {
             // 7.1
             log("CustomerDAO.searchCustomer() thất bại", e);
-            showMessage(request, "Không thực hiện được thao tác, vui lòng thử lại");
+            showMessage(request, MSG_ERROR);
         }
     }
 
@@ -55,19 +56,13 @@
     private void loadUnpaidInvoices(HttpServletRequest request, HttpSession session, Long customerId) {
         session.removeAttribute(A_INVOICES);
         session.removeAttribute(A_INVOICE_ID);
+        // Chỉ chấp nhận khách hàng có trong kết quả tìm kiếm hiện tại
         List<Customer> customers = (List<Customer>) session.getAttribute(A_CUSTOMERS);
-        boolean listed = false;
-        if (customers != null && customerId != null) {
-            for (Customer c : customers) {
-                if (customerId.equals(c.getId())) {
-                    listed = true;
-                    break;
-                }
-            }
-        }
+        boolean listed = customerId != null && customers != null
+                && customers.stream().anyMatch(c -> customerId.equals(c.getId()));
         if (!listed) {
             session.removeAttribute(A_CUSTOMER_ID);
-            showMessage(request, "Không tìm thấy khách hàng");
+            showMessage(request, MSG_NO_CUSTOMER);
             return;
         }
         session.setAttribute(A_CUSTOMER_ID, customerId);
@@ -82,7 +77,7 @@
         } catch (SQLException e) {
             // 7.1
             log("InvoiceDAO.getUnpaidInvoice() thất bại", e);
-            showMessage(request, "Không thực hiện được thao tác, vui lòng thử lại");
+            showMessage(request, MSG_ERROR);
         }
     }
 
@@ -91,82 +86,24 @@
     private void openInvoice(HttpServletRequest request, HttpServletResponse response, HttpSession session,
                              Long invoiceId) throws java.io.IOException {
         List<Invoice> unpaidInvoices = (List<Invoice>) session.getAttribute(A_INVOICES);
-        if (unpaidInvoices != null && invoiceId != null) {
-            for (Invoice invoice : unpaidInvoices) {
-                if (invoiceId.equals(invoice.getId())) {
-                    session.setAttribute(A_INVOICE_ID, invoiceId);
-                    response.sendRedirect("invoiceDetail.jsp?invoiceId=" + invoiceId);
-                    return;
-                }
-            }
+        boolean listed = invoiceId != null && unpaidInvoices != null
+                && unpaidInvoices.stream().anyMatch(inv -> invoiceId.equals(inv.getId()));
+        if (!listed) {
+            showMessage(request, "Hóa đơn không thuộc khách hàng đang chọn");
+            return;
         }
-        showMessage(request, "Hóa đơn không thuộc khách hàng đang chọn");
+        session.setAttribute(A_INVOICE_ID, invoiceId);
+        response.sendRedirect("invoiceDetail.jsp?invoiceId=" + invoiceId);
     }
 
     /** showMessage(message): thông báo cho nhân viên. */
     private void showMessage(HttpServletRequest request, String message) {
         request.setAttribute("message", message);
     }
-
-    private static SalesStaff loggedInStaff(HttpSession session) {
-        Object staff = session == null ? null : session.getAttribute("loggedInStaff");
-        if (staff instanceof SalesStaff && SalesStaff.POSITION.equals(((SalesStaff) staff).getPosition())) {
-            return (SalesStaff) staff;
-        }
-        return null;
-    }
-
-    private static Long parseId(String value) {
-        try {
-            return value == null ? null : Long.valueOf(value.trim());
-        } catch (NumberFormatException e) {
-            return null;
-        }
-    }
-
-    private static String esc(Object value) {
-        if (value == null) return "";
-        String s = value.toString();
-        StringBuilder sb = new StringBuilder(s.length());
-        for (char c : s.toCharArray()) {
-            switch (c) {
-                case '<': sb.append("&lt;"); break;
-                case '>': sb.append("&gt;"); break;
-                case '&': sb.append("&amp;"); break;
-                case '"': sb.append("&quot;"); break;
-                case '\'': sb.append("&#39;"); break;
-                default: sb.append(c);
-            }
-        }
-        return sb.toString();
-    }
-
-    /** Mã hiển thị theo Hình 4.6: KH + id (khách hàng), HD + id (hóa đơn). */
-    private static String customerCode(Long id) {
-        return "KH" + String.format("%02d", id);
-    }
-
-    private static String invoiceCode(Long id) {
-        return "HD" + String.format("%03d", id);
-    }
-
-    private static String statusLabel(String status) {
-        if (Invoice.DRAFT.equals(status)) return "Chưa chốt";
-        if (Invoice.CONFIRMED.equals(status)) return "Đã chốt, chưa thanh toán";
-        if (Invoice.PAID.equals(status)) return "Đã thanh toán";
-        return status;
-    }
-
-    private static String formatDate(LocalDateTime dateTime) {
-        return dateTime == null ? "" : dateTime.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
-    }
 %>
 <%
     request.setCharacterEncoding("UTF-8");
-    if (loggedInStaff(session) == null) {
-        response.sendRedirect(request.getContextPath() + "/view/member/login.jsp");
-        return;
-    }
+    if (!requireSalesStaff(request, response)) return;
 
     String action = request.getParameter("action");
     if (request.getParameter("subSearch") != null) {
@@ -185,9 +122,7 @@
     } else if ("openInvoice".equals(action)) {
         // Bước 23-24: chọn hóa đơn -> openInvoice(invoiceId)
         openInvoice(request, response, session, parseId(request.getParameter("invoiceId")));
-        if (response.containsHeader("Location")) {
-            return;
-        }
+        if (redirected(response)) return;
     } else if (session.getAttribute(A_CUSTOMER_ID) != null) {
         // Quay lại từ invoiceDetail.jsp: đọc lại danh sách hóa đơn chưa thanh toán của khách đang chọn
         loadUnpaidInvoices(request, session, (Long) session.getAttribute(A_CUSTOMER_ID));
@@ -208,18 +143,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>GaraMan - Tìm khách hàng</title>
+    <link rel="stylesheet" href="<%= request.getContextPath() %>/view/css/style.css">
     <style>
-        body { font-family: Arial, Helvetica, sans-serif; font-size: 14px; margin: 24px; color: #222; }
-        .panel { border: 1px solid #555; border-radius: 4px; max-width: 560px; padding: 0 16px 16px; }
-        .panel h2 { font-size: 15px; text-align: center; margin: 0 -16px 12px; padding: 10px 16px; border-bottom: 1px solid #555; }
-        .search-row { display: flex; align-items: center; gap: 8px; }
-        .search-row input { flex: 1; padding: 4px 6px; font-size: 14px; }
-        .btn { display: inline-block; margin: 8px 0; padding: 4px 12px; border: 1px solid #5b8fb9; background: #cfe5f7;
-               color: #000; text-decoration: none; font-size: 14px; cursor: pointer; }
-        h3 { font-size: 14px; margin: 16px 0 6px; }
-        table { border-collapse: collapse; width: 100%; }
-        th, td { border: 1px solid #333; padding: 3px 6px; text-align: left; vertical-align: top; }
-        .message { margin: 12px 0; padding: 6px 10px; border: 1px solid #c9a227; background: #fff8dc; }
+        .panel { max-width: 560px; }
+        .btn { margin: 8px 0; }
     </style>
 </head>
 <body>

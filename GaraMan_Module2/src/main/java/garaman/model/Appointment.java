@@ -3,7 +3,7 @@ package garaman.model;
 import java.time.LocalDateTime;
 
 /**
- * Lớp thực thể Appointment (Hình 4.7). Module nhận thanh toán không đọc/ghi lịch hẹn;
+ * Lớp thực thể Appointment (Hình 3.6). Module nhận thanh toán không đọc/ghi lịch hẹn;
  * lớp chỉ giữ quan hệ Customer - Appointment - Invoice như biểu đồ lớp.
  */
 public class Appointment {

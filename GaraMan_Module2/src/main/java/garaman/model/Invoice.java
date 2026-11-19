@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Lớp thực thể Invoice (Hình 4.7). status nhận ba giá trị DRAFT, CONFIRMED, PAID.
+ * Lớp thực thể Invoice (Hình 3.6). status nhận ba giá trị DRAFT, CONFIRMED, PAID.
  * totalAmount là thuộc tính dẫn xuất, không lưu: tính bằng calculateTotal().
  */
 public class Invoice {

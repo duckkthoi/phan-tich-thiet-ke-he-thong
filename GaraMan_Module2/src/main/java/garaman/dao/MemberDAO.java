@@ -17,7 +17,7 @@ import garaman.model.SalesStaff;
 /**
  * PHẦN NGOÀI MODULE NHẬN THANH TOÁN – đăng nhập tối thiểu (thuộc chức năng của gói member),
  * chỉ để tạo phiên loggedInStaff cho nhân viên bán hàng. Mật khẩu được lưu dạng băm SHA-256
- * (Bảng 4.1: password của Member được lưu dưới dạng băm).
+ * (Bảng 3.1: password của Member được lưu dưới dạng băm).
  */
 public class MemberDAO extends DAO {
 

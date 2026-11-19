@@ -1,6 +1,6 @@
 -- =====================================================================
 -- Dữ liệu chạy thử module Nhận thanh toán từ khách hàng (CSDL riêng garaman_module2)
--- Lấy theo Hình 4.6 và kịch bản v3: nhân viên "NV bán hàng A", khách Nguyễn Văn Nam (KH01),
+-- Lấy theo Hình 3.5 và kịch bản v3: nhân viên "NV bán hàng A", khách Nguyễn Văn Nam (KH01),
 -- Trần Hoài Nam (KH02); HD001 (Chưa chốt, 720.000 đ), HD002 (Đã chốt, chưa thanh toán);
 -- Bảo dưỡng phanh DV01, Dầu động cơ, Má phanh trước PT21.
 -- Ghi chú dữ liệu thử (tài liệu không ghi):
@@ -9,14 +9,14 @@
 --   * "Dầu động cơ" có id 3 (id 1 đã là DV01 vì tblItem dùng chung id) và tồn kho 30.
 --   * Chi tiết của HD002 (1 x Kiểm tra phanh) và các mô tả/thời gian của DV02.
 --
--- Dữ liệu bổ sung để test (ngoài Hình 4.6, không đổi các bản ghi ở trên):
+-- Dữ liệu bổ sung để test (ngoài Hình 3.5, không đổi các bản ghi ở trên):
 --   * Tài khoản (đều mật khẩu 123456):
 --       banhang2 - SalesStaff      -> đăng nhập được
 --       kho01    - WarehouseStaff  -> bị từ chối (không phải nhân viên bán hàng)
 --       quanly   - Manager         -> bị từ chối
 --   * Trạng thái lịch hẹn (tài liệu không quy định giá trị): BOOKED, COMPLETED, CANCELLED.
 --   * Trạng thái phiếu nhập (tài liệu không quy định giá trị): COMPLETED, PENDING.
---   * Tên khách bổ sung không chứa "nam" để kết quả tìm "Nam" vẫn đúng như Hình 4.6.
+--   * Tên khách bổ sung không chứa "nam" để kết quả tìm "Nam" vẫn đúng như Hình 3.5.
 --   * Các tình huống test theo khách hàng:
 --       KH03 Lê Thị Hồng    : HD003 PAID (từ lịch hẹn) + HD004 CONFIRMED -> thanh toán được
 --       KH04 Phạm Quốc Bảo  : HD005 DRAFT bình thường -> chốt thành công (trừ kho bugi, 4 cái)
@@ -176,7 +176,7 @@ INSERT INTO tblInvoice (id, customer_id, sales_staff_id, appointment_id, created
  (9,  7, 2, 4,    '2026-11-11 15:00:00', 'CONFIRMED', NULL),
  (10, 7, 1, NULL, '2026-11-14 09:15:00', 'DRAFT',     NULL);
 INSERT INTO tblInvoiceDetail (id, invoice_id, item_id, technician_id, quantity, unit_price) VALUES
- -- HD001 (Hình 4.6): 720.000 đ
+ -- HD001 (Hình 3.5): 720.000 đ
  (1,  1, 1,  NULL, 1, 400000),
  (2,  1, 3,  NULL, 1, 320000),
  -- HD002: 150.000 đ

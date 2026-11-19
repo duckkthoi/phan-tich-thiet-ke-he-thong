@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Lớp thực thể trừu tượng Item (Hình 4.7). Đối tượng được tạo luôn là Service hoặc SparePart.
+ * Lớp thực thể trừu tượng Item (Hình 3.6). Đối tượng được tạo luôn là Service hoặc SparePart.
  */
 public abstract class Item {
 

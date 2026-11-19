@@ -6,7 +6,7 @@ import java.sql.SQLException;
 import javax.sql.DataSource;
 
 /**
- * Lớp trừu tượng DAO (Hình 4.5): dùng chung nguồn kết nối (connection pool).
+ * Lớp trừu tượng DAO (Hình 3.4): dùng chung nguồn kết nối (connection pool).
  */
 public abstract class DAO {
 
@@ -18,5 +18,14 @@ public abstract class DAO {
 
     protected Connection getConnection() throws SQLException {
         return dataSource.getConnection();
+    }
+
+    /**
+     * Mẫu "%từ khóa%" cho LIKE ... ESCAPE '!': các kí tự đại diện trong từ khóa được thoát
+     * để so khớp nguyên văn.
+     */
+    protected static String likePattern(String keyword) {
+        String escaped = keyword.replace("!", "!!").replace("%", "!%").replace("_", "!_");
+        return "%" + escaped + "%";
     }
 }
