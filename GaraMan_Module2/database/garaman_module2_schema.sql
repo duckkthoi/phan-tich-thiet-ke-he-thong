@@ -26,11 +26,10 @@ CREATE TABLE tblStaff (
 );
 
 CREATE TABLE tblCustomer (
-    id        BIGINT       NOT NULL AUTO_INCREMENT,
-    full_name VARCHAR(100) NOT NULL,
-    phone     VARCHAR(20)  NOT NULL,
+    member_id BIGINT       NOT NULL,
     address   VARCHAR(255),
-    PRIMARY KEY (id)
+    PRIMARY KEY (member_id),
+    CONSTRAINT fk_customer_member FOREIGN KEY (member_id) REFERENCES tblMember (id) ON DELETE RESTRICT
 );
 
 CREATE TABLE tblTechnician (
@@ -81,7 +80,7 @@ CREATE TABLE tblAppointment (
     status           VARCHAR(30) NOT NULL,
     note             TEXT,
     PRIMARY KEY (id),
-    CONSTRAINT fk_appointment_customer FOREIGN KEY (customer_id) REFERENCES tblCustomer (id) ON DELETE RESTRICT
+    CONSTRAINT fk_appointment_customer FOREIGN KEY (customer_id) REFERENCES tblCustomer (member_id) ON DELETE RESTRICT
 );
 
 CREATE TABLE tblAppointmentDetail (
@@ -104,7 +103,7 @@ CREATE TABLE tblInvoice (
     payment_date   DATETIME    NULL,
     PRIMARY KEY (id),
     UNIQUE KEY uq_invoice_appointment (appointment_id),
-    CONSTRAINT fk_invoice_customer FOREIGN KEY (customer_id) REFERENCES tblCustomer (id) ON DELETE RESTRICT,
+    CONSTRAINT fk_invoice_customer FOREIGN KEY (customer_id) REFERENCES tblCustomer (member_id) ON DELETE RESTRICT,
     CONSTRAINT fk_invoice_staff FOREIGN KEY (sales_staff_id) REFERENCES tblStaff (member_id) ON DELETE RESTRICT,
     CONSTRAINT fk_invoice_appointment FOREIGN KEY (appointment_id) REFERENCES tblAppointment (id) ON DELETE RESTRICT
 );

@@ -50,26 +50,35 @@ DELETE FROM tblMember;
 
 -- Thành viên / nhân viên
 INSERT INTO tblMember (id, full_name, username, password, phone, email) VALUES
- (1, 'NV bán hàng A', 'banhang',  SHA2('123456', 256), NULL, NULL),
- (2, 'Phạm Thu Hà',   'banhang2', SHA2('123456', 256), '0981112233', 'ha.pt@garaman.vn'),
- (3, 'Đỗ Minh Quân',  'kho01',    SHA2('123456', 256), '0982223344', 'quan.dm@garaman.vn'),
- (4, 'Vũ Thị Lan',    'quanly',   SHA2('123456', 256), '0983334455', 'lan.vt@garaman.vn');
+ (101, 'NV bán hàng A', 'banhang', SHA2('123456', 256), NULL, NULL),
+ (102, 'Phạm Thu Hà', 'banhang2', SHA2('123456', 256), '0981112233', 'ha.pt@garaman.vn'),
+ (103, 'Đỗ Minh Quân', 'kho01', SHA2('123456', 256), '0982223344', 'quan.dm@garaman.vn'),
+ (104, 'Vũ Thị Lan', 'quanly', SHA2('123456', 256), '0983334455', 'lan.vt@garaman.vn');
 INSERT INTO tblStaff (member_id, position) VALUES
- (1, 'SalesStaff'),
- (2, 'SalesStaff'),
- (3, 'WarehouseStaff'),
- (4, 'Manager');
+ (101, 'SalesStaff'),
+ (102, 'SalesStaff'),
+ (103, 'WarehouseStaff'),
+ (104, 'Manager');
 
--- Khách hàng
-INSERT INTO tblCustomer (id, full_name, phone, address) VALUES
- (1, 'Nguyễn Văn Nam',  '0901234567', 'Hà Nội'),
- (2, 'Trần Hoài Nam',   '0912345678', NULL),
- (3, 'Lê Thị Hồng',     '0987654321', 'Hà Đông, Hà Nội'),
- (4, 'Phạm Quốc Bảo',   '0934567890', 'Cầu Giấy, Hà Nội'),
- (5, 'Hoàng Minh Đức',  '0978123456', 'Thanh Xuân, Hà Nội'),
- (6, 'Đặng Thu Trang',  '0965432187', NULL),
- (7, 'Bùi Văn Hùng',    '0923456781', 'Long Biên, Hà Nội'),
- (8, 'Ngô Thanh Tùng',  '0945612378', 'Hoàng Mai, Hà Nội');
+-- Khách hàng (Customer kế thừa Member: tên đăng nhập = số điện thoại, mật khẩu 123456)
+INSERT INTO tblMember (id, full_name, username, password, phone, email) VALUES
+ (1, 'Nguyễn Văn Nam', '0901234567', SHA2('123456', 256), '0901234567', NULL),
+ (2, 'Trần Hoài Nam', '0912345678', SHA2('123456', 256), '0912345678', NULL),
+ (3, 'Lê Thị Hồng', '0987654321', SHA2('123456', 256), '0987654321', NULL),
+ (4, 'Phạm Quốc Bảo', '0934567890', SHA2('123456', 256), '0934567890', NULL),
+ (5, 'Hoàng Minh Đức', '0978123456', SHA2('123456', 256), '0978123456', NULL),
+ (6, 'Đặng Thu Trang', '0965432187', SHA2('123456', 256), '0965432187', NULL),
+ (7, 'Bùi Văn Hùng', '0923456781', SHA2('123456', 256), '0923456781', NULL),
+ (8, 'Ngô Thanh Tùng', '0945612378', SHA2('123456', 256), '0945612378', NULL);
+INSERT INTO tblCustomer (member_id, address) VALUES
+ (1, 'Hà Nội'),
+ (2, NULL),
+ (3, 'Hà Đông, Hà Nội'),
+ (4, 'Cầu Giấy, Hà Nội'),
+ (5, 'Thanh Xuân, Hà Nội'),
+ (6, NULL),
+ (7, 'Long Biên, Hà Nội'),
+ (8, 'Hoàng Mai, Hà Nội');
 
 -- Kỹ thuật viên
 INSERT INTO tblTechnician (id, full_name, phone) VALUES
@@ -127,9 +136,9 @@ INSERT INTO tblSupplier (id, name, address, phone, contact_person) VALUES
  (2, 'Công ty TNHH Dầu nhớt Việt',          'Số 12 Phạm Văn Đồng, Bắc Từ Liêm, Hà Nội',    '02437654321', 'Trần Thị Mai'),
  (3, 'Đại lý Ắc quy và Điện ô tô Minh Khoa', 'Số 88 Giải Phóng, Hai Bà Trưng, Hà Nội',     '0904555666',  'Phan Minh Khoa');
 INSERT INTO tblImportReceipt (id, supplier_id, warehouse_staff_id, import_date, status) VALUES
- (1, 1, 3, '2026-10-01 09:00:00', 'COMPLETED'),
- (2, 2, 3, '2026-10-05 14:30:00', 'COMPLETED'),
- (3, 3, 3, '2026-11-13 10:00:00', 'PENDING');
+ (1, 1, 103, '2026-10-01 09:00:00', 'COMPLETED'),
+ (2, 2, 103, '2026-10-05 14:30:00', 'COMPLETED'),
+ (3, 3, 103, '2026-11-13 10:00:00', 'PENDING');
 INSERT INTO tblImportDetail (id, import_receipt_id, spare_part_id, quantity, import_price) VALUES
  (1, 1, 21, 10, 600000),
  (2, 1, 22, 10, 480000),
@@ -165,16 +174,16 @@ INSERT INTO tblAppointmentDetail (id, appointment_id, service_id) VALUES
 
 -- Hóa đơn
 INSERT INTO tblInvoice (id, customer_id, sales_staff_id, appointment_id, created_date, status, payment_date) VALUES
- (1,  1, 1, NULL, '2026-10-23 08:00:00', 'DRAFT',     NULL),
- (2,  1, 1, NULL, '2026-10-21 08:00:00', 'CONFIRMED', NULL),
- (3,  3, 1, 1,    '2026-11-02 09:00:00', 'PAID',      '2026-11-02 11:30:00'),
- (4,  3, 2, NULL, '2026-11-12 14:00:00', 'CONFIRMED', NULL),
- (5,  4, 1, 2,    '2026-11-13 08:30:00', 'DRAFT',     NULL),
- (6,  4, 1, NULL, '2026-11-14 08:00:00', 'DRAFT',     NULL),
- (7,  5, 2, 3,    '2026-11-10 10:00:00', 'DRAFT',     NULL),
- (8,  6, 1, NULL, '2026-10-15 16:00:00', 'PAID',      '2026-10-15 17:10:00'),
- (9,  7, 2, 4,    '2026-11-11 15:00:00', 'CONFIRMED', NULL),
- (10, 7, 1, NULL, '2026-11-14 09:15:00', 'DRAFT',     NULL);
+ (1, 1, 101, NULL, '2026-10-23 08:00:00', 'DRAFT', NULL),
+ (2, 1, 101, NULL, '2026-10-21 08:00:00', 'CONFIRMED', NULL),
+ (3, 3, 101, 1, '2026-11-02 09:00:00', 'PAID', '2026-11-02 11:30:00'),
+ (4, 3, 102, NULL, '2026-11-12 14:00:00', 'CONFIRMED', NULL),
+ (5, 4, 101, 2, '2026-11-13 08:30:00', 'DRAFT', NULL),
+ (6, 4, 101, NULL, '2026-11-14 08:00:00', 'DRAFT', NULL),
+ (7, 5, 102, 3, '2026-11-10 10:00:00', 'DRAFT', NULL),
+ (8, 6, 101, NULL, '2026-10-15 16:00:00', 'PAID', '2026-10-15 17:10:00'),
+ (9, 7, 102, 4, '2026-11-11 15:00:00', 'CONFIRMED', NULL),
+ (10, 7, 101, NULL, '2026-11-14 09:15:00', 'DRAFT', NULL);
 INSERT INTO tblInvoiceDetail (id, invoice_id, item_id, technician_id, quantity, unit_price) VALUES
  -- HD001 (Hình 3.5): 720.000 đ
  (1,  1, 1,  NULL, 1, 400000),
@@ -210,7 +219,6 @@ INSERT INTO tblInvoiceDetail (id, invoice_id, item_id, technician_id, quantity, 
 
 -- Đưa bộ đếm AUTO_INCREMENT về MAX(id) + 1 (InnoDB tự nâng giá trị nhỏ hơn lên MAX(id) + 1)
 ALTER TABLE tblMember            AUTO_INCREMENT = 1;
-ALTER TABLE tblCustomer          AUTO_INCREMENT = 1;
 ALTER TABLE tblTechnician        AUTO_INCREMENT = 1;
 ALTER TABLE tblItem              AUTO_INCREMENT = 1;
 ALTER TABLE tblSupplier          AUTO_INCREMENT = 1;

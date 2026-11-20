@@ -4,42 +4,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Lớp thực thể Customer (Hình 3.6).
+ * Lớp thực thể Customer (Hình 3.6): khách hàng là thành viên, kế thừa Member
+ * (họ tên, tên đăng nhập, mật khẩu, số điện thoại, email) và có thêm địa chỉ.
  */
-public class Customer {
+public class Customer extends Member {
 
-    private Long id;
-    private String fullName;
-    private String phone;
     private String address;
     private List<Appointment> appointments = new ArrayList<>();
     private List<Invoice> invoices = new ArrayList<>();
 
     public Customer() {
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getFullName() {
-        return fullName;
-    }
-
-    public void setFullName(String fullName) {
-        this.fullName = fullName;
-    }
-
-    public String getPhone() {
-        return phone;
-    }
-
-    public void setPhone(String phone) {
-        this.phone = phone;
     }
 
     public String getAddress() {

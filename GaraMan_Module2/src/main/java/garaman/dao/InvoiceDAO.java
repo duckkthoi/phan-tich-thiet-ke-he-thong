@@ -31,12 +31,13 @@ public class InvoiceDAO extends DAO {
 
     private static final String SQL_GET_HEADER =
             "SELECT inv.id, inv.created_date, inv.status, inv.payment_date, "
-            + "c.id AS customer_id, c.full_name AS customer_name, c.phone AS customer_phone, "
+            + "c.member_id AS customer_id, cm.full_name AS customer_name, cm.phone AS customer_phone, "
             + "c.address AS customer_address, "
             + "m.id AS staff_id, m.full_name AS staff_name, m.username AS staff_username, "
             + "m.phone AS staff_phone, m.email AS staff_email, st.position AS staff_position "
             + "FROM tblInvoice inv "
-            + "JOIN tblCustomer c ON c.id = inv.customer_id "
+            + "JOIN tblCustomer c ON c.member_id = inv.customer_id "
+            + "JOIN tblMember cm ON cm.id = c.member_id "
             + "JOIN tblStaff st ON st.member_id = inv.sales_staff_id "
             + "JOIN tblMember m ON m.id = st.member_id "
             + "WHERE inv.id = ?";

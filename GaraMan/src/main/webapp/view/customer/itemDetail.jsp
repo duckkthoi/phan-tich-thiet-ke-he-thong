@@ -61,6 +61,10 @@
 %>
 <%
     request.setCharacterEncoding("UTF-8");
+    // Chỉ khách hàng đã đăng nhập mới dùng được module (chưa đăng nhập / hết phiên -> login.jsp)
+    if (!requireCustomer(request, response)) {
+        return;
+    }
     String keyword = request.getParameter("keyword");
     if (keyword == null) keyword = "";
     request.setAttribute("keyword", keyword);

@@ -17,15 +17,16 @@ import garaman.model.Customer;
 public class CustomerDAO extends DAO {
 
     private static final String SQL_SEARCH =
-            "SELECT id, full_name, phone, address FROM tblCustomer "
-            + "WHERE LOWER(full_name) LIKE LOWER(?) ESCAPE '!' "
-            + "ORDER BY full_name, id";
+            "SELECT c.member_id AS id, m.full_name, m.phone, c.address "
+            + "FROM tblCustomer c JOIN tblMember m ON m.id = c.member_id "
+            + "WHERE LOWER(m.full_name) LIKE LOWER(?) ESCAPE '!' "
+            + "ORDER BY m.full_name, c.member_id";
 
     public CustomerDAO(DataSource dataSource) {
         super(dataSource);
     }
 
-    /** Bước 8-12: truy vấn tblCustomer với full_name LIKE từ khóa, đóng gói từng bản ghi thành Customer. */
+    /** Bước 8-12: truy vấn tblCustomer (nối tblMember, vì Customer kế thừa Member) với full_name LIKE từ khóa, đóng gói từng bản ghi thành Customer. */
     public List<Customer> searchCustomer(String name) throws SQLException {
         List<Customer> customers = new ArrayList<>();
         try (Connection conn = getConnection();

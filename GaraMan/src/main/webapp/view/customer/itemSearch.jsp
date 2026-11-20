@@ -54,6 +54,10 @@
 %>
 <%
     request.setCharacterEncoding("UTF-8");
+    // Chỉ khách hàng đã đăng nhập mới dùng được module (chưa đăng nhập / hết phiên -> login.jsp)
+    if (!requireCustomer(request, response)) {
+        return;
+    }
 
     // Bước 17-18: khách hàng chọn một dịch vụ/phụ tùng -> openItemDetail(itemId)
     if ("openItemDetail".equals(request.getParameter("action"))) {
